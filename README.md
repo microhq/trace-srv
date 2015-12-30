@@ -2,6 +2,8 @@
 
 Trace server is a distributed tracing storage system. It's built for the micro ecosystem and to be used with [go-platform/trace](https:/github.com/micro/go-platform/trace)
 
+![trace](trace.png)
+
 ## Getting started
 
 1. Install Consul
