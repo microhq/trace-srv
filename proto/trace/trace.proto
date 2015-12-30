@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+import "github.com/micro/go-platform/trace/proto/trace.proto";
+
+service Trace {
+	rpc Create(CreateRequest) returns (CreateResponse) {}
+	rpc Read(ReadRequest) returns (ReadResponse) {}
+
+}
+
+message CreateRequest {
+	Span span = 1;
+}
+
+message CreateResponse {
+}
+
+message ReadRequest {
+	string id = 1;
+}
+
+message ReadResponse {
+	repeated Span spans = 1;
+}
