@@ -1,10 +1,9 @@
 package main
 
 import (
-	"github.com/codegangsta/cli"
 	log "github.com/golang/glog"
-	"github.com/micro/go-micro/cmd"
-	"github.com/micro/go-micro/server"
+	"github.com/micro/cli"
+	micro "github.com/micro/go-micro"
 
 	// trace
 	"github.com/micro/trace-srv/handler"
@@ -19,36 +18,37 @@ import (
 )
 
 func main() {
-	cmd.Init()
+	service := micro.NewService(
+		micro.Name("go.micro.srv.trace"),
 
-	// Add for MySQL configuration
-	cmd.Flags = append(cmd.Flags,
-		cli.StringFlag{
-			Name:   "database_url",
-			EnvVar: "DATABASE_URL",
-			Usage:  "The database URL e.g root@tcp(127.0.0.1:3306)/trace",
-		},
+		micro.Flags(
+			cli.StringFlag{
+				Name:   "database_url",
+				EnvVar: "DATABASE_URL",
+				Usage:  "The database URL e.g root@tcp(127.0.0.1:3306)/trace",
+			},
+		),
+		// Add for MySQL configuration
+		micro.Action(func(c *cli.Context) {
+			if len(c.String("database_url")) > 0 {
+				mysql.Url = c.String("database_url")
+			}
+		}),
 	)
 
-	cmd.Actions = append(cmd.Actions, func(c *cli.Context) {
-		mysql.Url = c.String("database_url")
-	})
+	service.Init()
 
-	server.Init(
-		server.Name("go.micro.srv.trace"),
-	)
+	proto.RegisterTraceHandler(service.Server(), new(handler.Trace))
 
-	proto.RegisterTraceHandler(server.DefaultServer, new(handler.Trace))
-
-	server.Subscribe(
-		server.NewSubscriber(trace.TraceTopic, trace.ProcessSpan),
+	service.Server().Subscribe(
+		service.Server().NewSubscriber(trace.TraceTopic, trace.ProcessSpan),
 	)
 
 	if err := db.Init(); err != nil {
 		log.Fatal(err)
 	}
 
-	if err := server.Run(); err != nil {
+	if err := service.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
