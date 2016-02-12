@@ -21,12 +21,18 @@ var (
 				values (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		"readSpan": `SELECT trace_id, parent_id, span_id, timestamp, duration, debug, source, destination, name 
 				from %s.%s where trace_id = ? and timestamp > 0 limit 1`,
+		"deleteSpan": "DELETE FROM %s.%s where trace_id = ?",
+		"searchAsc": `SELECT trace_id, parent_id, span_id, timestamp, duration, debug, source, destination, name 
+				from %s.%s where parent_id = '0' and timestamp > 0 order by timestamp asc limit ? offset ?`,
+		"searchDesc": `SELECT trace_id, parent_id, span_id, timestamp, duration, debug, source, destination, name 
+				from %s.%s where parent_id = '0' and timestamp > 0 order by timestamp desc limit ? offset ?`,
 	}
 
 	annQ = map[string]string{
-		"createAnn": `INSERT INTO %s.%s (span_id, timestamp, type, akey, value, debug, service) 
-				values (?, ?, ?, ?, ?, ?, ?)`,
-		"readAnn": `SELECT span_id, timestamp, type, akey, value, debug, service from %s.%s where span_id = ?`,
+		"createAnn": `INSERT INTO %s.%s (span_id, trace_id, timestamp, type, akey, value, debug, service) 
+				values (?, ?, ?, ?, ?, ?, ?, ?)`,
+		"readAnn":   `SELECT span_id, trace_id, timestamp, type, akey, value, debug, service from %s.%s where span_id = ?`,
+		"deleteAnn": "DELETE FROM %s.%s where trace_id = ?",
 	}
 
 	st = map[string]*sql.Stmt{}
@@ -101,7 +107,7 @@ func (m *mysql) Create(span *proto.Span) error {
 	b, _ = json.Marshal(span.Destination)
 	destination = string(b)
 
-	_, err := st["createSpan"].Exec(span.Id, span.ParentId, span.TraceId, span.Timestamp, span.Duration, span.Debug, source, destination, span.Name)
+	_, err := st["createSpan"].Exec(span.TraceId, span.ParentId, span.Id, span.Timestamp, span.Duration, span.Debug, source, destination, span.Name)
 	if err != nil {
 		return err
 	}
@@ -113,13 +119,27 @@ func (m *mysql) Create(span *proto.Span) error {
 		b, _ = json.Marshal(ann.Debug)
 		debug = string(b)
 
-		_, err := st["createAnn"].Exec(span.Id, ann.Timestamp, ann.Type, ann.Key, ann.Value, debug, service)
+		_, err := st["createAnn"].Exec(span.Id, span.TraceId, ann.Timestamp, ann.Type, ann.Key, ann.Value, debug, service)
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func (m *mysql) Delete(traceId string) error {
+	if len(traceId) == 0 {
+		return errors.New("Invalid trace id")
+	}
+
+	_, err := st["deleteSpan"].Exec(traceId)
+	if err != nil {
+		return err
+	}
+
+	_, err = st["deleteAnn"].Exec(traceId)
+	return err
 }
 
 func (m *mysql) Read(traceId string) ([]*proto.Span, error) {
@@ -138,7 +158,7 @@ func (m *mysql) Read(traceId string) ([]*proto.Span, error) {
 	for r.Next() {
 		span := &proto.Span{}
 		var source, dest string
-		if err := r.Scan(&span.Id, &span.ParentId, &span.TraceId, &span.Timestamp, &span.Duration, &span.Debug, &source, &dest, &span.Name); err != nil {
+		if err := r.Scan(&span.TraceId, &span.ParentId, &span.Id, &span.Timestamp, &span.Duration, &span.Debug, &source, &dest, &span.Name); err != nil {
 			if err == sql.ErrNoRows {
 				return spans, nil
 			}
@@ -181,8 +201,8 @@ func (m *mysql) ReadAnnotations(spanId string) ([]*proto.Annotation, error) {
 	for r.Next() {
 		ann := &proto.Annotation{}
 		var debug, service string
-		var id string
-		if err := r.Scan(&id, &ann.Timestamp, &ann.Type, &ann.Key, &ann.Value, &debug, &service); err != nil {
+		var id, tid string
+		if err := r.Scan(&id, &tid, &ann.Timestamp, &ann.Type, &ann.Key, &ann.Value, &debug, &service); err != nil {
 			if err == sql.ErrNoRows {
 				return anns, nil
 			}
@@ -202,4 +222,44 @@ func (m *mysql) ReadAnnotations(spanId string) ([]*proto.Annotation, error) {
 		return nil, err
 	}
 	return anns, nil
+}
+
+func (m *mysql) Search(limit, offset int64, reverse bool) ([]*proto.Span, error) {
+	var r *sql.Rows
+	var err error
+
+	if reverse {
+		r, err = st["searchDesc"].Query(limit, offset)
+	} else {
+		r, err = st["searchAsc"].Query(limit, offset)
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer r.Close()
+
+	var spans []*proto.Span
+
+	for r.Next() {
+		span := &proto.Span{}
+		var source, dest string
+		if err := r.Scan(&span.TraceId, &span.ParentId, &span.Id, &span.Timestamp, &span.Duration, &span.Debug, &source, &dest, &span.Name); err != nil {
+			if err == sql.ErrNoRows {
+				return spans, nil
+			}
+			return nil, err
+		}
+		if err := json.Unmarshal([]byte(source), &span.Source); err != nil {
+			return nil, err
+		}
+		if err := json.Unmarshal([]byte(dest), &span.Destination); err != nil {
+			return nil, err
+		}
+		spans = append(spans, span)
+
+	}
+	if r.Err() != nil {
+		return nil, err
+	}
+	return spans, nil
 }

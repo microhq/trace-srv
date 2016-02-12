@@ -5,7 +5,9 @@ import "github.com/micro/go-platform/trace/proto/trace.proto";
 service Trace {
 	rpc Create(CreateRequest) returns (CreateResponse) {}
 	rpc Read(ReadRequest) returns (ReadResponse) {}
-
+	rpc Delete(DeleteRequest) returns (DeleteResponse) {}
+	rpc Search(SearchRequest) returns (SearchResponse) {}
+	// There is no update
 }
 
 message CreateRequest {
@@ -16,9 +18,28 @@ message CreateResponse {
 }
 
 message ReadRequest {
+	// trace id
 	string id = 1;
 }
 
 message ReadResponse {
+	repeated Span spans = 1;
+}
+
+message DeleteRequest {
+	// trace id
+	string id = 1;
+}
+
+message DeleteResponse {
+}
+
+message SearchRequest {
+	int64 limit = 1;
+	int64 offset = 2;
+	bool reverse = 3;
+}
+
+message SearchResponse {
 	repeated Span spans = 1;
 }

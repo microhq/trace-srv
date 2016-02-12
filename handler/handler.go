@@ -33,3 +33,30 @@ func (t *Trace) Create(ctx context.Context, req *proto.CreateRequest, rsp *proto
 	}
 	return nil
 }
+
+func (t *Trace) Delete(ctx context.Context, req *proto.DeleteRequest, rsp *proto.DeleteResponse) error {
+	if len(req.Id) == 0 {
+		return errors.BadRequest("go.micro.srv.trace.Trace.Delete", "invalid trace id")
+	}
+	if err := db.Delete(req.Id); err != nil {
+		return errors.InternalServerError("go.micro.srv.trace.Trace.Delete", err.Error())
+	}
+	return nil
+}
+
+func (t *Trace) Search(ctx context.Context, req *proto.SearchRequest, rsp *proto.SearchResponse) error {
+	if req.Limit <= 0 {
+		req.Limit = 10
+	}
+
+	if req.Offset < 0 {
+		req.Offset = 0
+	}
+
+	spans, err := db.Search(req.Limit, req.Offset, req.Reverse)
+	if err != nil {
+		return errors.InternalServerError("go.micro.srv.trace.Trace.Search", err.Error())
+	}
+	rsp.Spans = spans
+	return nil
+}

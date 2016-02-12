@@ -13,12 +13,14 @@ source text,
 destination text,
 name varchar(255),
 index (trace_id, timestamp),
+index (parent_id, timestamp),
 index(span_id));
 `
 
 	annSchema = `
 CREATE TABLE IF NOT EXISTS annotations (
 span_id varchar(36) not null,
+trace_id varchar(36),
 timestamp bigint,
 type tinyint(1),
 akey varchar(255),
