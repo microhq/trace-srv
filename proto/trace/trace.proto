@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+package go.micro.srv.trace.trace;
+
 import "github.com/micro/go-platform/trace/proto/trace.proto";
 
 service Trace {
@@ -35,9 +37,10 @@ message DeleteResponse {
 }
 
 message SearchRequest {
-	int64 limit = 1;
-	int64 offset = 2;
-	bool reverse = 3;
+	string name = 1;
+	int64 limit = 2;
+	int64 offset = 3;
+	bool reverse = 4;
 }
 
 message SearchResponse {

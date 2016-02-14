@@ -53,7 +53,7 @@ func (t *Trace) Search(ctx context.Context, req *proto.SearchRequest, rsp *proto
 		req.Offset = 0
 	}
 
-	spans, err := db.Search(req.Limit, req.Offset, req.Reverse)
+	spans, err := db.Search(req.Name, req.Limit, req.Offset, req.Reverse)
 	if err != nil {
 		return errors.InternalServerError("go.micro.srv.trace.Trace.Search", err.Error())
 	}

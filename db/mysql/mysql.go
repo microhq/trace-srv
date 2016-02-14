@@ -22,10 +22,14 @@ var (
 		"readSpan": `SELECT trace_id, parent_id, span_id, timestamp, duration, debug, source, destination, name 
 				from %s.%s where trace_id = ? and timestamp > 0 limit 1`,
 		"deleteSpan": "DELETE FROM %s.%s where trace_id = ?",
-		"searchAsc": `SELECT trace_id, parent_id, span_id, timestamp, duration, debug, source, destination, name 
+		"searchAsc": `select trace_id, parent_id, span_id, timestamp, duration, debug, source, destination, name 
 				from %s.%s where parent_id = '0' and timestamp > 0 order by timestamp asc limit ? offset ?`,
-		"searchDesc": `SELECT trace_id, parent_id, span_id, timestamp, duration, debug, source, destination, name 
+		"searchDesc": `select trace_id, parent_id, span_id, timestamp, duration, debug, source, destination, name 
 				from %s.%s where parent_id = '0' and timestamp > 0 order by timestamp desc limit ? offset ?`,
+		"searchNameAsc": `select trace_id, parent_id, span_id, timestamp, duration, debug, source, destination, name 
+				from %s.%s where parent_id = '0' and timestamp > 0 and name = ? order by timestamp asc limit ? offset ?`,
+		"searchNameDesc": `select trace_id, parent_id, span_id, timestamp, duration, debug, source, destination, name 
+				from %s.%s where parent_id = '0' and timestamp > 0 and name = ? order by timestamp desc limit ? offset ?`,
 	}
 
 	annQ = map[string]string{
@@ -224,14 +228,21 @@ func (m *mysql) ReadAnnotations(spanId string) ([]*proto.Annotation, error) {
 	return anns, nil
 }
 
-func (m *mysql) Search(limit, offset int64, reverse bool) ([]*proto.Span, error) {
+func (m *mysql) Search(name string, limit, offset int64, reverse bool) ([]*proto.Span, error) {
 	var r *sql.Rows
 	var err error
+	query := "search"
+	order := "Asc"
 
 	if reverse {
-		r, err = st["searchDesc"].Query(limit, offset)
+		order = "Desc"
+	}
+
+	if len(name) > 0 {
+		query = "searchName"
+		r, err = st[query+order].Query(name, limit, offset)
 	} else {
-		r, err = st["searchAsc"].Query(limit, offset)
+		r, err = st[query+order].Query(limit, offset)
 	}
 	if err != nil {
 		return nil, err

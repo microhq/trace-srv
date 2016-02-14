@@ -13,7 +13,7 @@ source text,
 destination text,
 name varchar(255),
 index (trace_id, timestamp),
-index (parent_id, timestamp),
+index (parent_id, timestamp, name),
 index(span_id));
 `
 
