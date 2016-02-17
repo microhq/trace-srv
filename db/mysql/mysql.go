@@ -20,7 +20,7 @@ var (
 		"createSpan": `INSERT INTO %s.%s (trace_id, parent_id, span_id, timestamp, duration, debug, source, destination, name)
 				values (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		"readSpan": `SELECT trace_id, parent_id, span_id, timestamp, duration, debug, source, destination, name 
-				from %s.%s where trace_id = ? and timestamp > 0 limit 1`,
+				from %s.%s where trace_id = ? and timestamp > 0`,
 		"deleteSpan": "DELETE FROM %s.%s where trace_id = ?",
 		"searchAsc": `select trace_id, parent_id, span_id, timestamp, duration, debug, source, destination, name 
 				from %s.%s where parent_id = '0' and timestamp > 0 order by timestamp asc limit ? offset ?`,
