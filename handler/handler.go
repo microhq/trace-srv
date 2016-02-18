@@ -3,9 +3,9 @@ package handler
 import (
 	"github.com/micro/go-micro/errors"
 
+	proto2 "github.com/micro/go-platform/trace/proto"
 	"github.com/micro/trace-srv/db"
 	proto "github.com/micro/trace-srv/proto/trace"
-
 	"golang.org/x/net/context"
 )
 
@@ -19,7 +19,26 @@ func (t *Trace) Read(ctx context.Context, req *proto.ReadRequest, rsp *proto.Rea
 	if err != nil {
 		return errors.InternalServerError("go.micro.srv.trace.Trace.Read", err.Error())
 	}
-	rsp.Spans = spans
+
+	// collapse spans
+	spanMap := make(map[string]*proto2.Span)
+
+	for _, span := range spans {
+		sp, ok := spanMap[span.Id]
+		if !ok {
+			spanMap[span.Id] = span
+			continue
+		}
+
+		if span.Timestamp < sp.Timestamp {
+			spanMap[span.Id] = span
+		}
+	}
+
+	for _, span := range spanMap {
+		rsp.Spans = append(rsp.Spans, span)
+	}
+
 	return nil
 }
 
@@ -57,6 +76,25 @@ func (t *Trace) Search(ctx context.Context, req *proto.SearchRequest, rsp *proto
 	if err != nil {
 		return errors.InternalServerError("go.micro.srv.trace.Trace.Search", err.Error())
 	}
-	rsp.Spans = spans
+
+	// collapse spans
+	spanMap := make(map[string]*proto2.Span)
+
+	for _, span := range spans {
+		sp, ok := spanMap[span.Id]
+		if !ok {
+			spanMap[span.Id] = span
+			continue
+		}
+
+		if span.Timestamp < sp.Timestamp {
+			spanMap[span.Id] = span
+		}
+	}
+
+	for _, span := range spanMap {
+		rsp.Spans = append(rsp.Spans, span)
+	}
+
 	return nil
 }
