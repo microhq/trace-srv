@@ -72,28 +72,38 @@ func (t *Trace) Search(ctx context.Context, req *proto.SearchRequest, rsp *proto
 		req.Offset = 0
 	}
 
-	spans, err := db.Search(req.Name, req.Limit, req.Offset, req.Reverse)
-	if err != nil {
-		return errors.InternalServerError("go.micro.srv.trace.Trace.Search", err.Error())
-	}
-
-	// collapse spans
-	spanMap := make(map[string]*proto2.Span)
-
-	for _, span := range spans {
-		sp, ok := spanMap[span.Id]
-		if !ok {
-			spanMap[span.Id] = span
-			continue
+LOOP:
+	for {
+		spans, err := db.Search(req.Name, req.Limit, req.Offset, req.Reverse)
+		if err != nil {
+			return errors.InternalServerError("go.micro.srv.trace.Trace.Search", err.Error())
 		}
 
-		if span.Timestamp < sp.Timestamp {
-			spanMap[span.Id] = span
-		}
-	}
+		// collapse spans
+		spanMap := make(map[string]*proto2.Span)
 
-	for _, span := range spanMap {
-		rsp.Spans = append(rsp.Spans, span)
+		for _, span := range spans {
+			sp, ok := spanMap[span.Id]
+			if !ok {
+				spanMap[span.Id] = span
+				continue
+			}
+
+			if span.Timestamp < sp.Timestamp {
+				spanMap[span.Id] = span
+			}
+		}
+
+		for _, span := range spanMap {
+			if len(rsp.Spans) == int(req.Limit) {
+				break LOOP
+			}
+			rsp.Spans = append(rsp.Spans, span)
+		}
+
+		if len(rsp.Spans) >= int(req.Limit) || len(spans) < int(req.Limit) {
+			break
+		}
 	}
 
 	return nil
