@@ -1,7 +1,7 @@
 package db
 
 import (
-	proto "github.com/micro/go-platform/trace/proto"
+	proto "github.com/micro/go-os/trace/proto"
 )
 
 var (

@@ -3,7 +3,7 @@ package handler
 import (
 	"github.com/micro/go-micro/errors"
 
-	proto2 "github.com/micro/go-platform/trace/proto"
+	proto2 "github.com/micro/go-os/trace/proto"
 	"github.com/micro/trace-srv/db"
 	proto "github.com/micro/trace-srv/proto/trace"
 	"golang.org/x/net/context"

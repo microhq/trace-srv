@@ -1,6 +1,6 @@
 # Trace Server
 
-Trace server is a distributed tracing storage system. It's built for the micro ecosystem and to be used with [go-platform/trace](https:/github.com/micro/go-platform/trace)
+Trace server is a distributed tracing storage system. It's built for the micro ecosystem and to be used with [go-os/trace](https:/github.com/micro/go-os/trace)
 
 ![trace](trace.png)
 
@@ -77,4 +77,4 @@ micro query go.micro.srv.trace Trace.Read '{"id": "c45ab444-ae8e-11e5-b22a-68a86
 
 ## Sending to Trace
 
-The trace server consumes messages from the broker topic micro.trace.span. Traces can be generated and sent with the go-platform.
+The trace server consumes messages from the broker topic micro.trace.span. Traces can be generated and sent with the go-os.

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	proto "github.com/micro/go-platform/trace/proto"
+	proto "github.com/micro/go-os/trace/proto"
 	"github.com/micro/trace-srv/db"
 
 	_ "github.com/go-sql-driver/mysql"

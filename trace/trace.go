@@ -3,7 +3,7 @@ package trace
 import (
 	"github.com/micro/trace-srv/db"
 
-	proto "github.com/micro/go-platform/trace/proto"
+	proto "github.com/micro/go-os/trace/proto"
 	"golang.org/x/net/context"
 )
 

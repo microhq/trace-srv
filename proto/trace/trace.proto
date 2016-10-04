@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package go.micro.srv.trace.trace;
 
-import "github.com/micro/go-platform/trace/proto/trace.proto";
+import "github.com/micro/go-os/trace/proto/trace.proto";
 
 service Trace {
 	rpc Create(CreateRequest) returns (CreateResponse) {}
@@ -13,7 +13,7 @@ service Trace {
 }
 
 message CreateRequest {
-	Span span = 1;
+	go.micro.os.trace.Span span = 1;
 }
 
 message CreateResponse {
@@ -25,7 +25,7 @@ message ReadRequest {
 }
 
 message ReadResponse {
-	repeated Span spans = 1;
+	repeated go.micro.os.trace.Span spans = 1;
 }
 
 message DeleteRequest {
@@ -44,5 +44,5 @@ message SearchRequest {
 }
 
 message SearchResponse {
-	repeated Span spans = 1;
+	repeated go.micro.os.trace.Span spans = 1;
 }
